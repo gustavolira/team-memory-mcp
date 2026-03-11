@@ -1,6 +1,32 @@
 {
   "name": "team-memory-mcp",
   "version": "1.0.0",
+  "description": "Shared team memory for AI coding agents. Bayesian confidence scoring with temporal decay.",
+  "author": {
+    "name": "Gustavo Lira",
+    "email": "guga.java@gmail.com",
+    "url": "https://github.com/gustavolira"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gustavolira/team-memory-mcp.git"
+  },
+  "homepage": "https://github.com/gustavolira/team-memory-mcp",
+  "bugs": {
+    "url": "https://github.com/gustavolira/team-memory-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "memory",
+    "ai-coding",
+    "team-memory",
+    "bayesian",
+    "claude-code",
+    "devin",
+    "cursor",
+    "model-context-protocol"
+  ],
   "type": "module",
   "bin": {
     "team-memory": "./build/index.js"
