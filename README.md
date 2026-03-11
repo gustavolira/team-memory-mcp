@@ -83,28 +83,23 @@ That's what Team Memory does. The confidence score is:
 
 ## Setup
 
-### Prerequisites
-
-- Node.js >= 18
-
-### Install and Build
+### Quick Start (npx — no install needed)
 
 ```bash
-git clone https://github.com/gustavolira/team-memory-mcp.git
-cd team-memory-mcp
-npm install
-npm run build
+npx team-memory-mcp
 ```
 
 ### Register with Claude Code
 
 ```bash
-claude mcp add team-memory -- node /absolute/path/to/team-memory-mcp/build/index.js
+claude mcp add team-memory -- npx team-memory-mcp
 ```
 
 ### Register with Devin
 
-Add the MCP server in Devin Settings > MCP Marketplace with the stdio command above.
+```bash
+devin mcp add team-memory -- npx team-memory-mcp
+```
 
 ### Register with Cursor
 
@@ -114,11 +109,21 @@ Add to your `.cursor/mcp.json`:
 {
   "mcpServers": {
     "team-memory": {
-      "command": "node",
-      "args": ["/absolute/path/to/team-memory-mcp/build/index.js"]
+      "command": "npx",
+      "args": ["team-memory-mcp"]
     }
   }
 }
+```
+
+### Install from Source (alternative)
+
+```bash
+git clone https://github.com/gustavolira/team-memory-mcp.git
+cd team-memory-mcp
+npm install
+npm run build
+node build/index.js
 ```
 
 ## Storage
@@ -212,7 +217,7 @@ Both project-scoped and global patterns are returned by default when searching.
 - [ ] Devin auto-recall at task start
 - [ ] Web dashboard for pattern management
 - [ ] Conflict resolution for contradicting patterns
-- [ ] npm publish for `npx team-memory-mcp`
+- [x] Published on npm: `npx team-memory-mcp`
 
 ## Built With
 
