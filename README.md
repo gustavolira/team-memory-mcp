@@ -4,7 +4,16 @@ Shared team memory for AI coding agents. Bayesian confidence scoring with tempor
 
 ## The Problem
 
-AI coding agents learn things during sessions — *"JDBI uses `createQuery()` for RETURNING clauses"*, *"always add `@RunOnVirtualThread` for blocking I/O in Quarkus"* — but that knowledge disappears when the session ends. The next session starts from zero. Multiply that across a team of engineers, each using AI agents independently, and you get the same mistakes rediscovered over and over.
+AI coding agents learn valuable things during sessions:
+
+- *"Spring Boot: use `@Transactional(readOnly = true)` on read-only queries to avoid unnecessary write locks"*
+- *"PostgreSQL: always add `CONCURRENTLY` to `CREATE INDEX` on tables over 100k rows to avoid locking production"*
+- *"REST APIs: return `409 Conflict` (not `400`) when a resource already exists — the API gateway retries on 400"*
+- *"Flyway: migration files must follow `V{ticket}_{seq}__{description}.sql` or CI rejects the PR"*
+
+But when the session ends, that knowledge disappears. The next session starts from zero.
+
+Multiply that across a team of 10 engineers, each using AI agents independently, and you get the same mistakes rediscovered week after week. The same wrong `@Transactional` scope. The same locking `CREATE INDEX`. The same 400 vs 409 confusion.
 
 ## The Solution
 
@@ -15,6 +24,25 @@ Team Memory gives AI agents a persistent, shared knowledge store where engineeri
 3. Confirmations from team members increase confidence; corrections decrease it
 4. Patterns not confirmed for 90 days gradually lose confidence (temporal decay)
 5. Search results are ranked by confidence — well-validated patterns surface first
+
+### What This Looks Like in Practice
+
+```
+"Spring Boot: use @Transactional(propagation = REQUIRES_NEW) for audit logging
+ to ensure logs persist even if the parent transaction rolls back"
+→ Confirmed 23 times | Confidence: 0.92
+
+"PostgreSQL: always add CONCURRENTLY to CREATE INDEX on tables with 100k+ rows"
+→ Confirmed 15 times | Confidence: 0.88
+
+"REST APIs: return 409 Conflict (not 400) when resource already exists on POST"
+→ Confirmed 8 times, corrected 1 time | Confidence: 0.82
+
+"JPA: avoid fetch = FetchType.EAGER on @ManyToOne — causes N+1 queries in lists"
+→ Confirmed 31 times | Confidence: 0.94
+```
+
+New team members get the accumulated knowledge from day one. AI agents stop making the same mistakes.
 
 ## How It Compares
 
@@ -163,17 +191,18 @@ Both project-scoped and global patterns are returned by default when searching.
 ## Usage Examples
 
 ```
-"Remember: in Quarkus, always add @RunOnVirtualThread to resource methods that do blocking I/O"
-→ AI calls store_pattern
+"Remember: Spring Boot @Transactional(readOnly = true) should be used on all read-only
+ service methods to avoid write locks and improve connection pool usage"
+→ AI calls store_pattern with domain="spring-boot", tags=["transactional", "performance"]
 
-"What patterns do we have for JDBI?"
-→ AI calls search_patterns with query="JDBI"
+"What patterns do we have for PostgreSQL?"
+→ AI calls search_patterns with query="PostgreSQL"
 
-"That JDBI pattern about createQuery is correct, I just confirmed it works"
-→ AI calls confirm_pattern
+"That pattern about CONCURRENTLY on CREATE INDEX is correct, saved us from a production lock"
+→ AI calls confirm_pattern (confidence goes up)
 
-"That pattern is outdated, the correct approach is now X"
-→ AI calls correct_pattern with replacement
+"That pattern about 400 vs 409 is wrong for our new gateway — it no longer retries on 400"
+→ AI calls correct_pattern with replacement text (confidence goes down, content updated)
 ```
 
 ## Roadmap
