@@ -1,0 +1,27 @@
+{
+  "name": "team-memory-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "team-memory": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '744')\"",
+    "dev": "tsc --watch"
+  },
+  "files": [
+    "build"
+  ],
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/node": "^22.13.9",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "@types/pg": "^8.18.0",
+    "better-sqlite3": "^11.7.0",
+    "pg": "^8.20.0",
+    "zod": "^3.24.2"
+  }
+}
