@@ -189,7 +189,7 @@ function computeConfidence(
 ): number {
   const posterior = alpha / (alpha + beta);
 
-  const ts = lastConfirmedAt.endsWith("Z") ? lastConfirmedAt : lastConfirmedAt + "Z";
+  const ts = lastConfirmedAt.endsWith("Z") ? lastConfirmedAt : lastConfirmedAt.replace(" ", "T") + "Z";
   const lastConfirmed = new Date(ts).getTime();
   const now = Date.now();
   const ageDays = (now - lastConfirmed) / (1000 * 60 * 60 * 24);
