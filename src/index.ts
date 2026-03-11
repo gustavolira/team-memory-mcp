@@ -36,6 +36,8 @@ interface PatternRow {
 // --- Storage interface ---
 
 interface Storage {
+  readonly like: string;
+  ph(n: number): string;
   init(): Promise<void>;
   insert(id: string, content: string, domain: string, tags: string, scope: string, scopeId: string, contributor: string): Promise<void>;
   getById(id: string): Promise<PatternRow | undefined>;
@@ -52,6 +54,8 @@ function createSqliteStorage(): Storage {
   let db: import("better-sqlite3").Database;
 
   return {
+    like: "LIKE",
+    ph: () => "?",  // SQLite uses positional ? placeholders
     async init() {
       const Database = (await import("better-sqlite3")).default;
       if (!existsSync(DB_DIR)) {
@@ -112,6 +116,8 @@ function createPgStorage(connectionString: string): Storage {
   let pool: import("pg").Pool;
 
   return {
+    like: "ILIKE",
+    ph: (n: number) => `$${n}`,  // PostgreSQL uses numbered $N placeholders
     async init() {
       const pg = await import("pg");
       const Pool = pg.Pool ?? pg.default?.Pool;
@@ -145,13 +151,9 @@ function createPgStorage(connectionString: string): Storage {
       return normalizeRow(rows[0]);
     },
     async search(conditions, params, limit) {
-      // Convert SQLite ? placeholders to PostgreSQL $N placeholders
-      let paramIndex = 0;
-      const pgConditions = conditions.map((c) =>
-        c.replace(/\bLIKE\b/g, "ILIKE").replace(/\?/g, () => `$${++paramIndex}`)
-      );
-      const where = pgConditions.length > 0 ? `WHERE ${pgConditions.join(" AND ")}` : "";
-      const { rows } = await pool.query(`SELECT * FROM patterns ${where} LIMIT $${++paramIndex}`, [...params, limit]);
+      const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+      const limitPh = this.ph(params.length + 1);
+      const { rows } = await pool.query(`SELECT * FROM patterns ${where} LIMIT ${limitPh}`, [...params, limit]);
       return rows.map(normalizeRow).filter((r): r is PatternRow => r !== undefined);
     },
     async confirm(id) {
@@ -343,31 +345,34 @@ server.tool(
     try {
       const conditions: string[] = [];
       const params: unknown[] = [];
+      let pi = 0;
+      const p = () => storage.ph(++pi);
+      const like = storage.like;
 
       if (query) {
-        conditions.push("content LIKE ? ESCAPE '\\'");
+        conditions.push(`content ${like} ${p()} ESCAPE '\\'`);
         params.push(`%${escapeLike(query)}%`);
       }
       if (domain) {
-        conditions.push("domain = ?");
+        conditions.push(`domain = ${p()}`);
         params.push(domain);
       }
       if (tags && tags.length > 0) {
-        const tagConditions = tags.map(() => "tags LIKE ? ESCAPE '\\'");
+        const tagConditions = tags.map(() => `tags ${like} ${p()} ESCAPE '\\'`);
         conditions.push(`(${tagConditions.join(" OR ")})`);
         tags.forEach((tag) => params.push(`%${escapeLike(JSON.stringify(tag))}%`));
       }
       if (scope === "project") {
-        conditions.push("scope = ?");
+        conditions.push(`scope = ${p()}`);
         params.push("project");
-        conditions.push("scope_id = ?");
+        conditions.push(`scope_id = ${p()}`);
         params.push(detectProjectId());
       } else if (scope === "global") {
-        conditions.push("scope = ?");
+        conditions.push(`scope = ${p()}`);
         params.push("global");
       } else if (scope !== "all") {
         // Default (undefined): current project + global patterns
-        conditions.push("((scope = ? AND scope_id = ?) OR scope = ?)");
+        conditions.push(`((scope = ${p()} AND scope_id = ${p()}) OR scope = ${p()})`);
         params.push("project", detectProjectId(), "global");
       }
       // scope === "all": no filter, return all patterns
