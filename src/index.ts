@@ -256,6 +256,10 @@ function detectContributor(): string {
 
 // --- Helpers ---
 
+function escapeLike(s: string): string {
+  return s.replace(/[%_\\]/g, "\\$&");
+}
+
 function formatPattern(row: PatternRow) {
   return {
     id: row.id,
@@ -340,17 +344,17 @@ server.tool(
       const params: unknown[] = [];
 
       if (query) {
-        conditions.push("content LIKE ?");
-        params.push(`%${query}%`);
+        conditions.push("content LIKE ? ESCAPE '\\'");
+        params.push(`%${escapeLike(query)}%`);
       }
       if (domain) {
         conditions.push("domain = ?");
         params.push(domain);
       }
       if (tags && tags.length > 0) {
-        const tagConditions = tags.map(() => "tags LIKE ?");
+        const tagConditions = tags.map(() => "tags LIKE ? ESCAPE '\\'");
         conditions.push(`(${tagConditions.join(" OR ")})`);
-        tags.forEach((tag) => params.push(`%"${tag}"%`));
+        tags.forEach((tag) => params.push(`%"${escapeLike(tag)}"%`));
       }
       if (scope === "project") {
         conditions.push("scope = ?");
