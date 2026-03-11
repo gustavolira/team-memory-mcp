@@ -39,7 +39,7 @@ interface Storage {
   init(): Promise<void>;
   insert(id: string, content: string, domain: string, tags: string, scope: string, scopeId: string, contributor: string): Promise<void>;
   getById(id: string): Promise<PatternRow | undefined>;
-  search(conditions: string[], params: unknown[]): Promise<PatternRow[]>;
+  search(conditions: string[], params: unknown[], limit: number): Promise<PatternRow[]>;
   confirm(id: string): Promise<void>;
   correct(id: string, replacement?: string): Promise<void>;
   remove(id: string): Promise<void>;
@@ -86,9 +86,9 @@ function createSqliteStorage(): Storage {
     async getById(id) {
       return db.prepare("SELECT * FROM patterns WHERE id = ?").get(id) as PatternRow | undefined;
     },
-    async search(conditions, params) {
+    async search(conditions, params, limit) {
       const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-      return db.prepare(`SELECT * FROM patterns ${where}`).all(...params) as PatternRow[];
+      return db.prepare(`SELECT * FROM patterns ${where} LIMIT ?`).all(...params, limit) as PatternRow[];
     },
     async confirm(id) {
       db.prepare("UPDATE patterns SET alpha = alpha + 1, last_confirmed_at = datetime('now') WHERE id = ?").run(id);
@@ -144,14 +144,14 @@ function createPgStorage(connectionString: string): Storage {
       const { rows } = await pool.query("SELECT * FROM patterns WHERE id = $1", [id]);
       return normalizeRow(rows[0]);
     },
-    async search(conditions, params) {
+    async search(conditions, params, limit) {
       // Convert SQLite ? placeholders to PostgreSQL $N placeholders
       let paramIndex = 0;
       const pgConditions = conditions.map((c) =>
         c.replace(/\bLIKE\b/g, "ILIKE").replace(/\?/g, () => `$${++paramIndex}`)
       );
       const where = pgConditions.length > 0 ? `WHERE ${pgConditions.join(" AND ")}` : "";
-      const { rows } = await pool.query(`SELECT * FROM patterns ${where}`, params);
+      const { rows } = await pool.query(`SELECT * FROM patterns ${where} LIMIT $${++paramIndex}`, [...params, limit]);
       return rows.map(normalizeRow).filter((r): r is PatternRow => r !== undefined);
     },
     async confirm(id) {
@@ -372,9 +372,10 @@ server.tool(
       }
       // scope === "all": no filter, return all patterns
 
-      const rows = await storage.search(conditions, params);
-      const minConf = min_confidence ?? 0.1;
       const maxResults = limit ?? 10;
+      const sqlLimit = Math.max(maxResults * 10, 200);
+      const rows = await storage.search(conditions, params, sqlLimit);
+      const minConf = min_confidence ?? 0.1;
 
       const results = rows
         .map(formatPattern)
