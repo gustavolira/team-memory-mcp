@@ -92,7 +92,7 @@ function createSqliteStorage(): Storage {
     },
     async search(conditions, params, limit) {
       const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-      return db.prepare(`SELECT * FROM patterns ${where} LIMIT ?`).all(...params, limit) as PatternRow[];
+      return db.prepare(`SELECT * FROM patterns ${where} ORDER BY alpha * 1.0 / (alpha + beta) DESC LIMIT ?`).all(...params, limit) as PatternRow[];
     },
     async confirm(id) {
       db.prepare("UPDATE patterns SET alpha = alpha + 1, last_confirmed_at = datetime('now') WHERE id = ?").run(id);
@@ -153,7 +153,7 @@ function createPgStorage(connectionString: string): Storage {
     async search(conditions, params, limit) {
       const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
       const limitPh = this.ph(params.length + 1);
-      const { rows } = await pool.query(`SELECT * FROM patterns ${where} LIMIT ${limitPh}`, [...params, limit]);
+      const { rows } = await pool.query(`SELECT * FROM patterns ${where} ORDER BY alpha * 1.0 / (alpha + beta) DESC LIMIT ${limitPh}`, [...params, limit]);
       return rows.map(normalizeRow).filter((r): r is PatternRow => r !== undefined);
     },
     async confirm(id) {
