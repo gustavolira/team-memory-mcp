@@ -352,13 +352,18 @@ server.tool(
         conditions.push(`(${tagConditions.join(" OR ")})`);
         tags.forEach((tag) => params.push(`%"${tag}"%`));
       }
-      if (scope && scope !== "all") {
+      if (scope === "project") {
         conditions.push("scope = ?");
-        params.push(scope);
-        if (scope === "project") {
-          conditions.push("scope_id = ?");
-          params.push(detectProjectId());
-        }
+        params.push("project");
+        conditions.push("scope_id = ?");
+        params.push(detectProjectId());
+      } else if (scope === "global") {
+        conditions.push("scope = ?");
+        params.push("global");
+      } else {
+        // Default ("all" or undefined): current project + global patterns
+        conditions.push("((scope = ? AND scope_id = ?) OR scope = ?)");
+        params.push("project", detectProjectId(), "global");
       }
 
       const rows = await storage.search(conditions, params);
