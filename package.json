@@ -1,6 +1,6 @@
 {
   "name": "team-memory-mcp",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Shared team memory for AI coding agents. Bayesian confidence scoring with temporal decay.",
   "author": {
     "name": "Gustavo Lira",
@@ -32,7 +32,7 @@
     "team-memory": "./build/index.js"
   },
   "scripts": {
-    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '744')\"",
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', 0o744)\"",
     "dev": "tsc --watch"
   },
   "files": [
