@@ -360,11 +360,12 @@ server.tool(
       } else if (scope === "global") {
         conditions.push("scope = ?");
         params.push("global");
-      } else {
-        // Default ("all" or undefined): current project + global patterns
+      } else if (scope !== "all") {
+        // Default (undefined): current project + global patterns
         conditions.push("((scope = ? AND scope_id = ?) OR scope = ?)");
         params.push("project", detectProjectId(), "global");
       }
+      // scope === "all": no filter, return all patterns
 
       const rows = await storage.search(conditions, params);
       const minConf = min_confidence ?? 0.1;
