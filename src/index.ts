@@ -413,11 +413,12 @@ server.tool(
       await storage.confirm(id);
 
       const after = await storage.getById(id);
+      if (!after) return err(`Pattern was deleted concurrently: ${id}`);
       return ok({
         message: "Pattern confirmed",
         previous_confidence: computeConfidence(before.alpha, before.beta, before.last_confirmed_at),
-        new_confidence: formatPattern(after!).confidence,
-        pattern: formatPattern(after!),
+        new_confidence: formatPattern(after).confidence,
+        pattern: formatPattern(after),
       });
     } catch (e) {
       return err(`Failed to confirm pattern: ${e instanceof Error ? e.message : String(e)}`);
@@ -441,11 +442,12 @@ server.tool(
       await storage.correct(id, replacement);
 
       const after = await storage.getById(id);
+      if (!after) return err(`Pattern was deleted concurrently: ${id}`);
       return ok({
         message: replacement ? "Pattern corrected and updated" : "Pattern marked as incorrect",
         previous_confidence: computeConfidence(before.alpha, before.beta, before.last_confirmed_at),
-        new_confidence: formatPattern(after!).confidence,
-        pattern: formatPattern(after!),
+        new_confidence: formatPattern(after).confidence,
+        pattern: formatPattern(after),
       });
     } catch (e) {
       return err(`Failed to correct pattern: ${e instanceof Error ? e.message : String(e)}`);
