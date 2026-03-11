@@ -147,7 +147,7 @@ function createPgStorage(connectionString: string): Storage {
       // Convert SQLite ? placeholders to PostgreSQL $N placeholders
       let paramIndex = 0;
       const pgConditions = conditions.map((c) =>
-        c.replace(/\?/g, () => `$${++paramIndex}`)
+        c.replace(/\bLIKE\b/g, "ILIKE").replace(/\?/g, () => `$${++paramIndex}`)
       );
       const where = pgConditions.length > 0 ? `WHERE ${pgConditions.join(" AND ")}` : "";
       const { rows } = await pool.query(`SELECT * FROM patterns ${where}`, params);
