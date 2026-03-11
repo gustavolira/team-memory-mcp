@@ -355,7 +355,7 @@ server.tool(
       if (tags && tags.length > 0) {
         const tagConditions = tags.map(() => "tags LIKE ? ESCAPE '\\'");
         conditions.push(`(${tagConditions.join(" OR ")})`);
-        tags.forEach((tag) => params.push(`%"${escapeLike(tag)}"%`));
+        tags.forEach((tag) => params.push(`%${escapeLike(JSON.stringify(tag))}%`));
       }
       if (scope === "project") {
         conditions.push("scope = ?");

@@ -1,6 +1,6 @@
 {
   "name": "team-memory-mcp",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Shared team memory for AI coding agents. Bayesian confidence scoring with temporal decay.",
   "author": {
     "name": "Gustavo Lira",
