@@ -114,7 +114,8 @@ function createPgStorage(connectionString: string): Storage {
   return {
     async init() {
       const pg = await import("pg");
-      pool = new pg.default.Pool({ connectionString });
+      const Pool = pg.Pool ?? pg.default?.Pool;
+      pool = new Pool({ connectionString });
       await pool.query(`
         CREATE TABLE IF NOT EXISTS patterns (
           id TEXT PRIMARY KEY,
@@ -269,7 +270,7 @@ function formatPattern(row: PatternRow) {
     scope: row.scope,
     scope_id: row.scope_id,
     confidence: computeConfidence(row.alpha, row.beta, row.last_confirmed_at),
-    confirmations: row.alpha - 1,
+    confirmations: row.alpha - 2,
     corrections: row.beta - 1,
     created_at: row.created_at,
     last_confirmed_at: row.last_confirmed_at,
